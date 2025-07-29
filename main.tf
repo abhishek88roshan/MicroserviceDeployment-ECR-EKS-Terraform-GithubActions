@@ -23,12 +23,19 @@ data "aws_subnets" "default" {
   }
 }
 
-resource "aws_ecr_repository" "httpd_app" {
-  name                 = "my-httpd-app"
-  image_tag_mutability = "MUTABLE"
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+# Reference existing ECR repository
+data "aws_ecr_repository" "httpd_app" {
+  name = "my-httpd-app"
+}
+
+# Reference existing KMS Alias
+data "aws_kms_alias" "cluster" {
+  name = "alias/eks/prod-cluster"
+}
+
+# Reference existing CloudWatch Log Group for EKS control plane
+data "aws_cloudwatch_log_group" "eks" {
+  name = "/aws/eks/prod-cluster/cluster"
 }
 
 module "eks" {
@@ -39,6 +46,18 @@ module "eks" {
   cluster_version = "1.29"
   vpc_id          = data.aws_vpc.default.id
   subnet_ids      = data.aws_subnets.default.ids
+
+  # Use the existing KMS key (from the alias)
+  create_kms_key            = false
+  cluster_encryption_config = {
+    provider_key_arn = data.aws_kms_alias.cluster.target_key_arn
+    resources        = ["secrets"]
+  }
+
+  # Use the existing CloudWatch Log Group
+  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  create_cloudwatch_log_group = false
+  cloudwatch_log_group_arn    = data.aws_cloudwatch_log_group.eks.arn
 
   eks_managed_node_group_defaults = {
     ami_type       = "AL2_x86_64"
