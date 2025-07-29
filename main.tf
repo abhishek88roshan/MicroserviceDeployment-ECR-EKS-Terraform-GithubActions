@@ -54,10 +54,9 @@ module "eks" {
     resources        = ["secrets"]
   }
 
-  # Use the existing CloudWatch Log Group
-  cluster_enabled_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+  # Logging config - do not create, just enable log types
+  cluster_enabled_log_types   = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
   create_cloudwatch_log_group = false
-  cloudwatch_log_group_arn    = data.aws_cloudwatch_log_group.eks.arn
 
   eks_managed_node_group_defaults = {
     ami_type       = "AL2_x86_64"
