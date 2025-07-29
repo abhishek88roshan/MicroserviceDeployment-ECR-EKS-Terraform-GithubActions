@@ -8,15 +8,17 @@ output "cluster_endpoint" {
   value       = module.eks.cluster_endpoint
 }
 
-# REMOVE or COMMENT THIS BLOCK (not supported in v19.21.0)
-# output "kubeconfig" {
-#   description = "Kubeconfig file content for this EKS cluster"
-#   value       = module.eks.kubeconfig
-#   sensitive   = true
-# }
-
 output "ecr_repository_url" {
-  description = "URL of the ECR repository"
-  value       = aws_ecr_repository.httpd_app.repository_url
+  description = "URL of the existing ECR repository"
+  value       = data.aws_ecr_repository.httpd_app.repository_url
 }
 
+output "kms_key_arn" {
+  description = "ARN of the existing KMS key used for EKS cluster encryption"
+  value       = data.aws_kms_alias.cluster.target_key_arn
+}
+
+output "cloudwatch_log_group_arn" {
+  description = "ARN of the existing CloudWatch log group for EKS control plane"
+  value       = data.aws_cloudwatch_log_group.eks.arn
+}
